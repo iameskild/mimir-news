@@ -49,7 +49,6 @@ task = Task(
     expected_output=task_goal,
     output_file="output.txt",
     verbose=True,
-
 )
 
 

@@ -158,9 +158,9 @@ def save_response(response: dict, input: PredictionMarket):
     Save the response to a file in markdown format.
     """
     # Extract message content and citations
-    message = response['choices'][0]['message']['content']
-    citations = response.get('citations', [])
-    
+    message = response["choices"][0]["message"]["content"]
+    citations = response.get("citations", [])
+
     # Format markdown content
     markdown_content = f"""# Research: {input.question}
 
@@ -180,7 +180,7 @@ def save_response(response: dict, input: PredictionMarket):
     )
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(path, "w", encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(markdown_content)
 
 

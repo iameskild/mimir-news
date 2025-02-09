@@ -27,6 +27,7 @@ def train():
     except Exception as e:
         raise Exception(f"An error occurred while training the crew: {e}")
 
+
 def replay():
     """
     Replay the crew execution from a specific task.
@@ -37,13 +38,16 @@ def replay():
     except Exception as e:
         raise Exception(f"An error occurred while replaying the crew: {e}")
 
+
 def test():
     """
     Test the crew execution and returns the results.
     """
 
     try:
-        mimir_news_crew.test(n_iterations=int(sys.argv[1]), openai_model_name=sys.argv[2])
+        mimir_news_crew.test(
+            n_iterations=int(sys.argv[1]), openai_model_name=sys.argv[2]
+        )
 
     except Exception as e:
         raise Exception(f"An error occurred while testing the crew: {e}")
