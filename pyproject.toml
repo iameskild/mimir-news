@@ -1,0 +1,31 @@
+[project]
+name = "mimir_news"
+version = "0.1.0"
+description = "mimir-news using crewAI"
+authors = [{ name = "Eskild Eriksen", email = "eskild.eriksen122@gmail.com" }]
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "crewai",
+    "pandas",
+    "pydantic",
+    "python-dotenv",
+    "requests",
+    "pymanifold @ git+https://github.com/iameskild/pymanifold.git",
+]
+
+[project.scripts]
+mimir_news = "mimir_news.main:run"
+run_crew = "mimir_news.main:run"
+train_crew = "mimir_news.main:train"
+replay_crew = "mimir_news.main:replay"
+test_crew = "mimir_news.main:test"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.crewai]
+type = "crew"
+
+[tool.hatch.metadata]
+allow-direct-references = true
