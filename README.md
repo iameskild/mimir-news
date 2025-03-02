@@ -21,12 +21,15 @@ cp .env.example .env
 ```bash
 OPENAI_API_KEY=<your-openai-api-key>
 PERPLEXITY_API_KEY=<your-perplexity-api-key>
+ELEVEN_LABS_API_KEY=<your-eleven-labs-api-key>
+
+MANIFOLD_API_KEY=<your-manifold-api-key>
 ```
 
 ## Running the project
 
 ```bash
-crewai run
+python -m src.mimir_news.main
 ```
 
 This will output the initial report to the `output.txt` file.

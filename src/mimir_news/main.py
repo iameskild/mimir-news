@@ -1,53 +1,33 @@
-import sys
-import warnings
+from dotenv import load_dotenv
+import logging
 
-from mimir_news.crew import mimir_news_crew
+from .agents import Researcher, NewsWriter, call_eleven_labs_api
+from .markets import get_recently_closed_markets
 
-warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
+load_dotenv()
 
+logger = logging.getLogger(__name__)
 
-def run():
+def main():
     """
-    Run the crew.
-    """
-    try:
-        mimir_news_crew.kickoff()
-    except Exception as e:
-        raise Exception(f"An error occurred while running the crew: {e}")
-
-
-def train():
-    """
-    Train the crew for a given number of iterations.
+    Main function to run the Mimir News application.
     """
 
-    try:
-        mimir_news_crew.train(n_iterations=int(sys.argv[1]), filename=sys.argv[2])
+    markets = get_recently_closed_markets()
+    researcher = Researcher()
+    news_writer = NewsWriter()
 
-    except Exception as e:
-        raise Exception(f"An error occurred while training the crew: {e}")
+    for market in markets:
+        question = market.question
+        logger.info(f"Researching question: {question}")
+        research_details = researcher.call_llm(market)
+        logger.info("Research completed")
+        logger.info(f"Writing news copy for question: {question}")
+        news_copy = news_writer.call_llm(research_details)
+        logger.info("News copy completed")
+        logger.info(f"Generating audio for news copy: {news_copy}")
+        call_eleven_labs_api(news_copy, save_path=f"news_copy_{question}.mp3")
+        logger.info("Audio generated")
 
-
-def replay():
-    """
-    Replay the crew execution from a specific task.
-    """
-    try:
-        mimir_news_crew.replay(task_id=sys.argv[1])
-
-    except Exception as e:
-        raise Exception(f"An error occurred while replaying the crew: {e}")
-
-
-def test():
-    """
-    Test the crew execution and returns the results.
-    """
-
-    try:
-        mimir_news_crew.test(
-            n_iterations=int(sys.argv[1]), openai_model_name=sys.argv[2]
-        )
-
-    except Exception as e:
-        raise Exception(f"An error occurred while testing the crew: {e}")
+if __name__ == "__main__":
+    main()
