@@ -1,21 +1,26 @@
 import os
 from typing import Any, Dict
-from elevenlabs import ElevenLabs
 import requests
 from enum import Enum
 from abc import ABC
+from pathlib import Path
 
-from pydantic import BaseModel
 import openai
+from pydantic import BaseModel
+from elevenlabs import ElevenLabs
+from prompt_poet import Prompt
 
 from .models import ResearchDetails
+
 
 class LLM(Enum):
     PERPLEXITY = "perplexity"
     OPENAI = "openai"
 
+
 # Drew - male voice, good for news
 VOICE_ID = "29vD33N1CtxCmqQRPOHJ"
+
 
 ### Base Agent ###
 
@@ -25,18 +30,26 @@ class Agent(ABC):
     An agent is a class that can call an LLM.
     """
 
-    def __init__(self, name: str, role: str, base_prompt: str, llm: LLM = LLM.PERPLEXITY):
+    def __init__(self, name: str, prompt_template: str, llm: LLM = LLM.OPENAI):
         self.name = name
-        self.role = role
-        self.base_prompt = base_prompt
+        self.prompt_template = self._load_prompt_template(prompt_template)
         self.llm = llm
-        self.question = None
 
-    def _load_prompt(self, input: str | BaseModel) -> str:
+    def _load_prompt_template(self, template_name: str) -> str:
         """
-        Load the prompt with the input.
+        Load the prompt template from the prompts directory.
         """
-        return self.base_prompt.format(input=input)
+        prompts_dir = Path(__file__).parent / "prompts"
+        template_path = prompts_dir / f"{template_name}.yaml"
+        with open(template_path) as f:
+            return f.read()
+
+    def _create_prompt(self, input: BaseModel) -> Prompt:
+        """
+        Create a Prompt object with the template and input data.
+        """
+        template_data = {**input.model_dump()}
+        return Prompt(raw_template=self.prompt_template, template_data=template_data)
 
     def call_llm(
         self,
@@ -47,11 +60,12 @@ class Agent(ABC):
         """
         Call the LLM with the input.
         """
-        prompt = self._load_prompt(input)
+        prompt = self._create_prompt(input)
+
         if self.llm == LLM.PERPLEXITY:
-            output = call_perplexity_api(self.role, prompt, **kwargs)
+            output = call_perplexity_api(prompt.messages, **kwargs)
         elif self.llm == LLM.OPENAI:
-            output = call_openai_api(self.role, prompt, **kwargs)
+            output = call_openai_api(prompt.messages, **kwargs)
         else:
             raise ValueError(f"LLM {self.llm} not supported")
 
@@ -70,34 +84,12 @@ class Agent(ABC):
 ### Researcher Agent ###
 
 
-research_role = """
-You're a seasoned prediction markets researcher with a knack for uncovering the latest developments and trends in high-volume markets. 
-Known for your ability to find the most relevant information and present it in a clear and concise manner, 
-you excel at identifying key insights that can inform trading strategies and market predictions.
-"""
-
-research_prompt = """
-Conduct thorough research on a particular prediction market question.
-The question is:
-
-```
-{input.question}
-```
-
-And description is:
-
-```
-{input.description}
-```
-"""
-
-
 class Researcher(Agent):
-    def __init__(self):
+    def __init__(self, llm: LLM = LLM.PERPLEXITY):
         super().__init__(
             name="Researcher",
-            role=research_role,
-            base_prompt=research_prompt,
+            prompt_template="researcher",
+            llm=llm,
         )
 
     def format_output(self, output: str) -> ResearchDetails:
@@ -106,37 +98,23 @@ class Researcher(Agent):
         """
         if self.llm == LLM.PERPLEXITY:
             citations = output["citations"]
-            content = output['choices'][0]['message']['content'].split('</think>')[-1]
+            content = output["choices"][0]["message"]["content"].split("</think>")[-1]
             return ResearchDetails(research=content, citations=citations)
         else:
             raise ValueError(f"LLM {self.llm} not supported")
 
 
-news_writer_role = """
-You're a seasoned news copywriter with a knack for writing news copy that are both informative and engaging.
-The news copy will be used by the news anchor to read the news on the radio.
-"""
+### News Writer Agent ###
 
-news_writer_prompt = """
-You are provided with the following research.
-Write a news copy about the following prediction market question:
-
-```
-{input.research}
-```
-
-Please limit the news copy to 150 words.
-"""
 
 class NewsWriter(Agent):
     def __init__(self, llm: LLM = LLM.OPENAI):
         super().__init__(
             name="NewsWriter",
-            role=news_writer_role,
-            base_prompt=news_writer_prompt,
+            prompt_template="news_writer",
             llm=llm,
         )
-    
+
     def format_output(self, output: str) -> str:
         """
         Format the output.
@@ -144,17 +122,11 @@ class NewsWriter(Agent):
         return output
 
 
-### News Anchor ###
-
-
-
-
 ### AI Models ###
 
 
 def call_perplexity_api(
-    role: str, prompt: str, 
-    model: str = "sonar-reasoning-pro"
+    messages: list, model: str = "sonar-reasoning-pro"
 ) -> Dict[str, Any]:
     """
     Call the perplexity API.
@@ -166,10 +138,7 @@ def call_perplexity_api(
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
 
     payload = {
-        "messages": [
-            {"role": "system", "content": role},
-            {"role": "user", "content": prompt},
-        ],
+        "messages": messages,
         "model": model,
         "frequency_penalty": 1,
         "max_tokens": None,
@@ -196,23 +165,24 @@ def call_perplexity_api(
         raise Exception(f"An error occurred while calling the perplexity API: {e}")
 
 
-def call_openai_api(role: str, prompt: str, model: str = "gpt-4o-mini") -> Dict[str, Any]:
+def call_openai_api(messages: list, model: str = "gpt-4o-mini") -> Dict[str, Any]:
     """
     Call the openai API.
     """
-
     openai.api_key = os.getenv("OPENAI_API_KEY")
     if not openai.api_key:
         raise Exception("OPENAI_API_KEY is not set")
     client = openai.OpenAI(api_key=openai.api_key)
     response = client.chat.completions.create(
         model=model,
-        messages=[{"role": "system", "content": role}, {"role": "user", "content": prompt}],
+        messages=messages,
     )
     return response.choices[0].message.content
 
 
-def call_eleven_labs_api(text: str, voice_id: str = VOICE_ID, save_path: str = None) -> Dict[str, Any]:
+def call_eleven_labs_api(
+    text: str, voice_id: str = VOICE_ID, save_path: str = None
+) -> bytes:
     """
     Call the eleven labs API.
     """
@@ -226,9 +196,8 @@ def call_eleven_labs_api(text: str, voice_id: str = VOICE_ID, save_path: str = N
     )
     # Convert generator to bytes
     audio_data = b"".join(response)
-    
+
     if save_path:
         with open(save_path, "wb") as f:
             f.write(audio_data)
     return audio_data
-

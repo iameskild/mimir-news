@@ -11,11 +11,13 @@ dependencies = [
     "python-dotenv",
     "requests",
     "smolagents",
+    "prompt-poet",
+    "elevenlabs",
     "pymanifold @ git+https://github.com/iameskild/pymanifold.git",
 ]
 
 [project.scripts]
-mimir_news = "mimir_news.main"
+mimir_news = "mimir_news.main:main"
 # run_crew = "mimir_news.main:run"
 # train_crew = "mimir_news.main:train"
 # replay_crew = "mimir_news.main:replay"

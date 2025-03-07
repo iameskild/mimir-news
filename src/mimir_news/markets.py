@@ -13,7 +13,7 @@ def get_recently_closed_markets(
     n_markets: int = TOP_N_MARKETS, lookback_weeks: int = LOOKBACK_WEEKS
 ) -> list[PredictionMarket]:
     """
-    Get the most recently closed prediction markets. Perform some basic to get
+    Get the most recently closed prediction markets. Perform some basic filter to get
     the markets with greatest trading volume and decent number of unique bettors.
     """
     try:
