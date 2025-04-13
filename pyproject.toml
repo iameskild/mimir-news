@@ -5,15 +5,16 @@ description = "Evaluate news based on interest in prediction markets"
 authors = [{ name = "Eskild Eriksen", email = "eskild.eriksen122@gmail.com" }]
 requires-python = ">=3.10,<3.13"
 dependencies = [
+    "elevenlabs",
+    "moviepy",
+    "openai",
     "pandas",
+    "prompt-poet",
     "pydantic",
-    "pydantic-ai",
+    "pymanifold @ git+https://github.com/iameskild/pymanifold.git",
     "python-dotenv",
     "requests",
-    "smolagents",
-    "prompt-poet",
-    "elevenlabs",
-    "pymanifold @ git+https://github.com/iameskild/pymanifold.git",
+    "selenium",
 ]
 
 [project.scripts]

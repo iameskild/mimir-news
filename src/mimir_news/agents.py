@@ -41,22 +41,21 @@ class Agent(ABC):
         """
         prompts_dir = Path(__file__).parent / "prompts"
         template_path = prompts_dir / f"{template_name}.yaml"
-        with open(template_path) as f:
-            return f.read()
+        return template_path
 
     def _create_prompt(self, input: BaseModel) -> Prompt:
         """
         Create a Prompt object with the template and input data.
         """
         template_data = {**input.model_dump()}
-        return Prompt(raw_template=self.prompt_template, template_data=template_data)
+        return Prompt(template_path=self.prompt_template, template_data=template_data)
 
     def call_llm(
         self,
         input: BaseModel,
         format_output: bool = True,
         **kwargs,
-    ) -> Dict[str, Any] | BaseModel:
+    ) -> Dict[str, Any] | BaseModel | str:
         """
         Call the LLM with the input.
         """

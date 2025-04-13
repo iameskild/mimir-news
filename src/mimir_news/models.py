@@ -8,6 +8,8 @@ class PredictionMarket(BaseModel):
     categories: list[str]
     outcome_type: str
     probability: float
+    creator_name: str
+    embed_url: str
 
 
 class ResearchDetails(BaseModel):

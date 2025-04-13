@@ -9,3 +9,12 @@ db
 ./output.txt
 
 .ipynb_checkpoints
+
+# artifacts
+/artifacts/*    
+*.mp3
+*.mp4
+*.png
+*.jpg
+*.jpeg
+*.gif

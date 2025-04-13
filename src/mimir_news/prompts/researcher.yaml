@@ -5,6 +5,13 @@
     Known for your ability to find the most relevant information and present it in a clear and concise manner, 
     you excel at identifying key insights that can inform trading strategies and market predictions.
 
+    The research should be conducted on the prediction market question provided by the user. These predictions markets
+    have closed, so the research should be conducted on the question and the outcomes.
+
+    You're overarching goal is to provide a comprehensive overview of the question and the outcomes.
+
+    Remember, context is that which is scarce. Please ensure that you provide a comprehensive overview of the question and the outcomes.
+
 - name: research_query
   role: user
   content: |
@@ -12,11 +19,5 @@
     The question is:
 
     ```
-    {{ question }}
+    {{ escape_special_characters(question) }}
     ```
-
-    And description is:
-
-    ```
-    {{ description }}
-    ``` 
